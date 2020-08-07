@@ -6,50 +6,52 @@ from blessed import Terminal
 import time
 
 term = Terminal()
-echo = partial(print, flush=True, end='')
+
+
+def jump(t, f, lower_boundary, upper_boundary):
+    if t >= lower_boundary and t < upper_boundary:
+        return f(t)
 
 
 fps = 240
 step = 1/fps
-
-
-def f(t):
-    """ Jump function
-
-    x - time since jump was performed
-
-    Returns jump height if jump duration is not exceeded else `None`.
-    The returned value is externally trimmed to [0, 1].
-    """
-    if t >= 0 and t < pi:
-        return sin(t)
-
-
+jump_function = sin
+lower_boundary = 0
+upper_boundary = pi
 jump_amplitude = term.height
-z = y = 0
-y_ = jump_amplitude
-jump_time = None
+jump_duration = upper_boundary - lower_boundary
+
+echo = partial(print, flush=True, end='')
+jump = partial(jump,
+               f=jump_function,
+               lower_boundary=lower_boundary,
+               upper_boundary=upper_boundary)
+
 jumping = False
+jump_time = None
+y = 0
+y_ = term.height
 
 with term.cbreak(), term.hidden_cursor(), term.fullscreen():
+    echo(term.move_y(term.height//2) + term.center('Press any key to jump!'))
     while True:
         frame_start = time.time()
 
         if jumping:
-            y = f(time.time() - jump_time)
-            if y is None:
+            y = jump(time.time() - jump_time)
+            if y is None:  # jump duration exceeded!
                 jumping = False
                 y = 0
             else:
                 y = min(1, max(0, y))
 
-        if (tmp := term.height - round(y*(jump_amplitude))) != y_:
+        if (tmp := term.height - round(y * jump_amplitude)) != y_:
             echo(term.move_yx(y_, 0) + ' '*term.width)
             y_ = tmp
             echo(term.move_yx(y_, 0) + '#'*term.width)
 
-        jump = term.inkey(timeout=frame_start - time.time() + step)
-        if not jumping and jump:
+        key_pressed = term.inkey(timeout=frame_start - time.time() + step)
+        if not jumping and key_pressed:
             jump_time = time.time()
             jumping = True
 
