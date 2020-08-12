@@ -14,70 +14,76 @@ import random
 
 DURATION = 60  # in seconds
 SHUFFLE = True  # shuffle words of a test file?
-TEST_FILE = os.path.realpath(__file__)[:-2] + 'txt'
+TEST_FILE_PATH = os.path.realpath(__file__)[:-2] + 'txt'
 NUMBER_OF_ROWS = 2
 
 term = Terminal()
 
-normal = term.normal
-correct = term.color(46)
-wrong = term.color(196)
+color_normal = term.normal
+color_correct = term.color(46)
+color_wrong = term.color(196)
 
 
 def on_resize(*_):
+    """Called every time a resize signal (`signal.SIGWINCH`) is sent.
+
+    Sets the global `redraw` flag to true.
+    """
     global redraw
     redraw = True
 
 
-def draw(words, inwords, word_i, text, wpm, timestamp):
-    output_lines = []
-    print_line = False
-    line, line_i, len_line = '', 0, 0
-    for i, (word, inword) in enumerate(zip_longest(words, inwords)):
-        if len_line + len(word) >= term.width:
-            if print_line:
-                if len_line < term.width:
-                    line += term.clear_eol
+def draw(words, colors, word_i, text, wpm, timestamp):
+    """Text wraps the `words` list to the terminal width, and prints
+    `NUMBER_OF_ROWS` lines of wrapped words starting with the line
+    containing the current word that is being typed.
+    As a consequence this can become slow if the text is really long,
+    and the duration of the test is infinite.
+    A better approach would be to text wrap only `on_resize`, but that
+    would mean there would need to be at least 2 structures holding the
+    same data for `words` and `colors` (one text wrapped, one not).
 
-                output_lines.append(line)
-                if len(output_lines) >= NUMBER_OF_ROWS:
-                    break
+    Already typed words appear in either `color_correct` or `color_wrong`,
+    whereas the currently typed word can additionally be `color_normal` when
+    the word starts with the typed text but isn't (yet) correct.
+    """
+    current_word_color = color_correct if words[word_i] == text else \
+        color_normal if words[word_i].startswith(text) else \
+        color_wrong
 
-            line, line_i, len_line = '', line_i+1, 0
+    colors = colors + [current_word_color + term.reverse]
 
-        if line:
-            line += ' '
-            len_line += 1
-
-        if i == word_i:
-            color = correct if word == text else \
-                    normal if word.startswith(text) else \
-                    wrong
-
-            print_line = True
-            line += color + term.reverse(word)
-
-        else:
-            color = normal if i >= len(inwords) else \
-                    correct if word == inword else \
-                    wrong
-
-            line += color + word
-
-        len_line += len(word)
-
-    prompt = f'>>>{text}' + term.clear_eol
-    stats = f'{wpm:3d} wpm | {timestamp}'
-    position = term.move_x(term.width-len(stats))
-    output_lines.append(prompt + position + stats)
-
-    for line_i, line in enumerate(output_lines):
-        if line_i >= term.height:
+    line_i = 0
+    len_line = 0
+    line_words = []
+    line_height = None
+    for i, (word, color) in enumerate(zip_longest(words, colors,
+                                                  fillvalue=color_normal)):
+        if line_height and line_height >= min(term.height, NUMBER_OF_ROWS):
             break
 
-        echo(term.move_yx(line_i, 0) + line)
+        if len_line + len(word) + len(line_words) > term.width:
+            if line_height is not None:
+                line = ' '.join(line_words)
+                if len_line + len(line_words) - 1 < term.width:
+                    line += term.clear_eol
 
-    echo(term.move_yx(len(output_lines)-1, 3+len(text)))
+                echo(term.move_yx(line_height, 0) + line)
+                line_height += 1
+
+            line_i += 1
+            len_line = 0
+            line_words = []
+
+        if i == word_i:
+            line_height = 0
+
+        line_words.append(color + word + color_normal)
+        len_line += len(word)
+
+    echo(term.move_yx(line_height, 0))
+    echo(f">>>{text}{' '*(term.width-len(text)-21)}{wpm:3d} wpm | {timestamp}")
+    echo(term.move_x(3 + len(text)))
 
 
 redraw = True
@@ -85,7 +91,7 @@ echo = partial(print, end='', flush=True)
 signal.signal(signal.SIGWINCH, on_resize)
 
 if __name__ == '__main__':
-    with open(TEST_FILE) as f:
+    with open(TEST_FILE_PATH) as f:
         words = re.findall(r"[\w']+", f.read())
 
     if SHUFFLE:
@@ -96,14 +102,14 @@ if __name__ == '__main__':
     duration = start = end = 0
     word_i = 0
     text = ''
-    inwords = []
+    colors = []
 
     with term.cbreak(), term.fullscreen(), suppress(KeyboardInterrupt):
         while word_i < len(words) and not start or time() - start < DURATION:
             word = words[word_i]
 
             if redraw:
-                draw(words, inwords, word_i, text, wpm, timestamp)
+                draw(words, colors, word_i, text, wpm, timestamp)
                 redraw = False
 
             char = term.inkey(timeout=0.1)
@@ -122,12 +128,15 @@ if __name__ == '__main__':
 
             elif char == ' ':
                 if text:
-                    correct_chars += 1  # space
                     total_chars += len(word) + 1
-                    inwords.append(text)
+
                     if text == word:
-                        correct_chars += len(word)
-                        wpm = min(int(correct_chars*12/duration), 999)
+                        correct_chars += len(word) + 1
+                        colors.append(color_correct)
+                    else:
+                        colors.append(color_wrong)
+
+                    wpm = min(int(correct_chars*12/duration), 999)
 
                     text = ''
                     word_i += 1
