@@ -89,7 +89,7 @@ if __name__ == "__main__":
         term.inkey()
         message("press 'asd' or 'hjl' to move, 'r' to rotate and 'q' to quit")
         term.inkey()
-        message('')
+        message(term.clear)
         next_block = create_block()
         start = time()
         step = start + speed
