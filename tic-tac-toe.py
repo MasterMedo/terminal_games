@@ -4,7 +4,7 @@ from functools import partial
 term = Terminal()
 echo = partial(print, flush=True)
 
-winning_positions = ('123', '456', '789', '147', '258', '789', '159', '357')
+winning_positions = ('123', '456', '789', '147', '258', '369', '159', '357')
 moves = '123456789'
 grid = {}
 i = 1
