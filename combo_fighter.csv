@@ -1,0 +1,23 @@
+button_combination,name,damage
+ ,jump,0
+d,duck,0
+h,hit,2
+j,jab,1
+k,kick,3
+l,load,0
+ k,jump-kick,3
+hh,hit-hit,2
+hj,hit-jab,1
+hk,hit-kick,1
+jh,jab-hit,3
+jj,jab-jab,1
+l ,high-jump,0
+lh,uppercut,3
+lk,roundhouse-kick,5
+dlk,liver-kick,4
+hhh,hit-hit-hit,2
+jhh,jab-hit-hit,4
+jjj,jab-jab-jab,1
+jjh,jab-jab-hit,3
+l dh,elbow-drop,10
+jhhdlh,flying-uppercut,15
