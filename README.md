@@ -18,7 +18,7 @@ It is advised to use equal height and width (square/block/geometric) fonts.
 ### tic-tac-toe
 ![tic-tac-toe](./img/tic-tac-toe.gif)
 
-# A sneak peek of what's comming
+# A sneak peek of what's coming
 
 ### Chess
 ![chess](./img/chess.png)
@@ -27,5 +27,5 @@ It is advised to use equal height and width (square/block/geometric) fonts.
 
 ```
 pip3 install blessed
-python typing_test.py
+python typing_test.py -sd 60 < typing_test.txt
 ```
