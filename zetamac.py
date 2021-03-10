@@ -35,7 +35,8 @@ with term.cbreak():
         while time() - start < duration and text != result:
             c = term.inkey(timeout=0.1)
             if c == '\x08' or c == '\x7f':
-                print('\b \b', end='', flush=True)
+                if text:
+                    print('\b \b', end='', flush=True)
                 text = text[:-1]
 
             elif c in '1234567890':
