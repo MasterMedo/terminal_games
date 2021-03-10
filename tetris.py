@@ -1,9 +1,11 @@
-from blessed import Terminal
+import random
+
+from math import factorial
 from time import sleep, time
 from functools import partial
 from collections import defaultdict
-from math import factorial
-import random
+
+from blessed import Terminal
 
 
 def is_valid(old_block, new_block):
@@ -45,7 +47,7 @@ def move(block, direction):
 
 def rotate(block, paint=True):
     center = block[0]
-    rotated_block = [center + (xy-center)*1j for xy in block]
+    rotated_block = [center*(1-1j) + xy*1j for xy in block]
     if is_valid(block, rotated_block):
         if paint:
             repaint(block, rotated_block)
@@ -73,14 +75,15 @@ height = 20
 score = 0
 speed = 0.5
 
+# center of rotation, blocks...
 O_block = [4.5-1.5j, 4-1j, 4-2j, 5-1j, 5-2j]
 I_block = [5-3j, 5-2j, 5-1j, 5-4j]
 T_block = [4-2j, 3-2j, 4-1j, 5-2j]
 L_block = [4-1j, 4-2j, 4-3j, 5-3j]
-L2_block = [4-1j, 4-2j, 4-3j, 3-3j]
+J_block = [4-1j, 4-2j, 4-3j, 3-3j]
 S_block = [5-1j, 4-1j, 5-2j, 6-2j]
 Z_block = [5-2j, 4-2j, 5-1j, 6-1j]
-blocks = [O_block, I_block, T_block, L_block, L2_block, S_block, Z_block]
+blocks = [O_block, I_block, T_block, L_block, J_block, S_block, Z_block]
 block_traveling = False
 
 if __name__ == "__main__":
